@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sports Facility Booking</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-role="Member">
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="site-header">
+    <h1>Sports Facility Booking</h1>
+    <nav aria-label="Page sections">
+      <ul>
+        <li><a href="#facilities">Facilities</a></li>
+        <li><a href="#booking">Book a slot</a></li>
+        <li><a href="#bookings">Bookings</a></li>
+        <li class="manager-only"><a href="#maintenance">Maintenance</a></li>
+      </ul>
+    </nav>
+    <!-- Role selector simulates login (no real authentication) -->
+    <div class="role-bar">
+      <div class="field-inline">
+        <label for="roleSelect">Role</label>
+        <select id="roleSelect">
+          <option value="Member">Member</option>
+          <option value="Manager">Manager</option>
+        </select>
+      </div>
+      <div class="field-inline">
+        <label for="currentEmail">Your email</label>
+        <input id="currentEmail" type="email" value="student@uni.edu" autocomplete="email">
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Global messages are announced to screen readers -->
+    <p id="globalMessage" class="message" role="status" aria-live="polite"></p>
+
+    <!-- Confirmation panel: used for cancel, reject and maintenance warnings -->
+    <section id="actionPanel" class="panel" hidden tabindex="-1" aria-labelledby="panelTitle">
+      <h2 id="panelTitle"></h2>
+      <p id="panelText"></p>
+      <ul id="panelList"></ul>
+      <div id="reasonWrap" hidden>
+        <label for="reasonInput">Reason for rejection</label>
+        <textarea id="reasonInput" rows="2" aria-describedby="err-reasonInput"></textarea>
+        <span class="error" id="err-reasonInput" aria-live="polite"></span>
+      </div>
+      <div class="button-row">
+        <button type="button" id="panelConfirm">Confirm</button>
+        <button type="button" id="panelBack" class="secondary">Go back</button>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-summary">
+      <h2 id="h-summary">Summary</h2>
+      <ul id="summaryList" class="summary"></ul>
+    </section>
+
+    <div class="layout">
+      <!-- Filters (sidebar on desktop) -->
+      <aside class="filters" aria-labelledby="h-filter">
+        <h2 id="h-filter">Filter facilities</h2>
+        <div class="field">
+          <label for="typeFilter">Type</label>
+          <select id="typeFilter"><option value="">All types</option></select>
+        </div>
+        <div class="field">
+          <label for="capacityFilter">Minimum capacity</label>
+          <input id="capacityFilter" type="number" min="0" max="100" step="1" placeholder="e.g. 10">
+        </div>
+        <div class="field">
+          <label for="availFilter">Availability on selected date</label>
+          <select id="availFilter">
+            <option value="">Any</option>
+            <option value="free">Has free slots</option>
+          </select>
+        </div>
+        <button type="button" id="clearFilters" class="secondary">Clear filters</button>
+      </aside>
+
+      <div class="content">
+        <section id="facilities" aria-labelledby="h-fac">
+          <h2 id="h-fac">Facilities</h2>
+          <div id="facilityList" class="card-grid"></div>
+          <p id="facilityEmpty" class="empty" hidden>No facilities match your filters.</p>
+        </section>
+
+        <section id="booking" aria-labelledby="h-book">
+          <h2 id="h-book">Book a slot</h2>
+          <div class="booking-grid">
+            <form id="bookingForm" novalidate>
+              <h3 id="formTitle">New booking request</h3>
+              <div class="field">
+                <label for="memberName">Full name</label>
+                <input id="memberName" type="text" required autocomplete="name" maxlength="40"
+                       pattern="[A-Za-z .'\-]{2,40}" title="2 to 40 letters, spaces, apostrophes or hyphens."
+                       aria-describedby="err-memberName">
+                <span class="error" id="err-memberName" aria-live="polite"></span>
+              </div>
+              <div class="field">
+                <label for="email">Email</label>
+                <input id="email" type="email" required autocomplete="email" aria-describedby="err-email">
+                <span class="error" id="err-email" aria-live="polite"></span>
+              </div>
+              <div class="field">
+                <label for="facility">Facility</label>
+                <select id="facility" required aria-describedby="err-facility"></select>
+                <span class="error" id="err-facility" aria-live="polite"></span>
+              </div>
+              <div class="field">
+                <label for="date">Date (next 30 days)</label>
+                <input id="date" type="date" required aria-describedby="err-date">
+                <span class="error" id="err-date" aria-live="polite"></span>
+              </div>
+              <div class="row-2">
+                <div class="field">
+                  <label for="start">Start time</label>
+                  <select id="start" required aria-describedby="err-start"></select>
+                </div>
+                <div class="field">
+                  <label for="duration">Duration</label>
+                  <select id="duration" required aria-describedby="err-duration">
+                    <option value="1">1 hour</option>
+                    <option value="2">2 hours</option>
+                    <option value="3">3 hours</option>
+                  </select>
+                </div>
+              </div>
+              <span class="error" id="err-start" aria-live="polite"></span>
+              <span class="error" id="err-duration" aria-live="polite"></span>
+
+              <fieldset>
+                <legend>Booking type</legend>
+                <label class="radio"><input type="radio" name="bookingType" value="Individual" checked> Individual</label>
+                <label class="radio"><input type="radio" name="bookingType" value="Team"> Team</label>
+              </fieldset>
+
+              <div id="teamFields" hidden>
+                <div class="field">
+                  <label for="teamName">Team name</label>
+                  <input id="teamName" type="text" maxlength="40" pattern="[A-Za-z0-9 .'\-]{2,40}"
+                         title="2 to 40 letters, numbers, spaces, apostrophes or hyphens." aria-describedby="err-teamName">
+                  <span class="error" id="err-teamName" aria-live="polite"></span>
+                </div>
+                <div class="field">
+                  <label for="players">Number of players</label>
+                  <input id="players" type="number" min="1" max="30" step="1" aria-describedby="err-players">
+                  <span class="error" id="err-players" aria-live="polite"></span>
+                </div>
+              </div>
+
+              <p class="cost">Total cost: <output id="costOutput" for="facility duration">—</output></p>
+              <p id="liveCheck" class="live" aria-live="polite"></p>
+              <p id="suggestion" class="suggestion" aria-live="polite"></p>
+              <p class="hint">Team bookings and bookings longer than 2 hours need manager approval.</p>
+
+              <div class="button-row">
+                <button type="submit" id="submitBtn">Request booking</button>
+                <button type="button" id="cancelEditBtn" class="secondary" hidden>Stop editing</button>
+              </div>
+              <p id="formMessage" class="message" role="status" aria-live="polite"></p>
+            </form>
+
+            <section aria-labelledby="h-sched" class="schedule">
+              <h3 id="h-sched">Daily schedule</h3>
+              <p id="scheduleHint" class="hint"></p>
+              <ol id="scheduleList" class="slots"></ol>
+            </section>
+          </div>
+        </section>
+
+        <section id="bookings" aria-labelledby="h-bookings">
+          <h2 id="h-bookings">Bookings</h2>
+          <div class="inline-filters">
+            <div class="field">
+              <label for="statusFilter">Status</label>
+              <select id="statusFilter">
+                <option value="">All statuses</option>
+                <option>Pending</option><option>Approved</option><option>Rejected</option>
+                <option>Cancelled</option><option>Completed</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="dateFilter">Date</label>
+              <input id="dateFilter" type="date">
+            </div>
+            <button type="button" id="clearBookingFilters" class="secondary">Clear</button>
+          </div>
+          <div class="table-wrap" id="tableWrap">
+            <table>
+              <caption>Bookings list</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Facility</th><th scope="col">Date</th><th scope="col">Time</th>
+                  <th scope="col">Member</th><th scope="col">Status</th><th scope="col">Cost</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="bookingBody"></tbody>
+            </table>
+          </div>
+          <p id="bookingEmpty" class="empty" hidden></p>
+        </section>
+
+        <!-- Manager only -->
+        <section id="maintenance" class="manager-only" aria-labelledby="h-maint">
+          <h2 id="h-maint">Maintenance blocks</h2>
+          <form id="maintenanceForm" novalidate>
+            <div class="field">
+              <label for="mFacility">Facility</label>
+              <select id="mFacility" required aria-describedby="err-mFacility"></select>
+              <span class="error" id="err-mFacility" aria-live="polite"></span>
+            </div>
+            <div class="field">
+              <label for="mDate">Date</label>
+              <input id="mDate" type="date" required aria-describedby="err-mDate">
+              <span class="error" id="err-mDate" aria-live="polite"></span>
+            </div>
+            <div class="row-2">
+              <div class="field">
+                <label for="mStart">Start</label>
+                <select id="mStart" required></select>
+              </div>
+              <div class="field">
+                <label for="mEnd">End</label>
+                <select id="mEnd" required aria-describedby="err-mEnd"></select>
+              </div>
+            </div>
+            <span class="error" id="err-mEnd" aria-live="polite"></span>
+            <div class="field">
+              <label for="mReason">Reason</label>
+              <input id="mReason" type="text" required maxlength="80" aria-describedby="err-mReason">
+              <span class="error" id="err-mReason" aria-live="polite"></span>
+            </div>
+            <button type="submit">Add maintenance block</button>
+          </form>
+          <ul id="blockList" class="block-list"></ul>
+          <p id="blockEmpty" class="empty" hidden>No maintenance blocks yet.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>Course assignment: client-side demo. Data lives in your browser only (JavaScript arrays and localStorage).</p>
+    <button type="button" id="resetData" class="secondary">Reset sample data</button>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
